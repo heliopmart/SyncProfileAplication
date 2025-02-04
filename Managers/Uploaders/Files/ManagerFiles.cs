@@ -8,6 +8,12 @@ using Microsoft.IdentityModel.Tokens;
 namespace WindowsApp.Managers.Uploaders.Files{
 
     class ManagerFiles{
+        private class returnUploadFileToBoxInterface{
+            public Box.Sdk.Gen.Schemas.Files? file {get;set;}
+            public required string fileName {get;set;}
+            
+        }
+
         public static async Task<bool> DeleteFiles(BoxClient client, string? filePath, string? fileId, string parentFolderId){
             fileId ??= await GetOrCreateFileByPathAsync(client, filePath, parentFolderId);
             var fileName = Path.GetFileName(filePath);
@@ -175,62 +181,37 @@ namespace WindowsApp.Managers.Uploaders.Files{
                 throw new InvalidOperationException($"Folder path '{parentFolderPath}' could not be located or created.");
             }
 
-            using (var fileStream = new FileStream(filePath, FileMode.Open)){
-               var fileName = Path.GetFileName(filePath);
-
-               var attributes = new UploadFileRequestBodyAttributesField(
-                   name: fileName, 
-                   parent: new UploadFileRequestBodyAttributesParentField(id: folderId) 
-               );
-
-               var requestBody = new UploadFileRequestBody(
-                   attributes: attributes,
-                   file: fileStream 
-               );
-
-                try{
-
-                    Box.Sdk.Gen.Schemas.Files file = await client.Uploads.UploadFileAsync(requestBody);
-                    
-                    bool response = false;
-                    if(VerifyIfFileNotIsMdOrPrivate(fileName)){
-                        var ShareLink = await CreateFileShareLink(client, file?.Entries?[0].Id);
-                        response = await BoxUploader.UpdateFileListMetadataProject(client, filePath, fileName, ShareLink, "add");
-                    }else{
-                        // if have "_" or is ".md"
-                        response = await UploadReadmeFileToAzure(filePath, fileName);
-                    }
-
-                    Console.WriteLine($"Response Uploader: ${response}");
-
-                    if(response)
-                        return await BoxUploader.UpdateMetaDataProject();
-                    else
-                        return false;
-
-                }catch(Exception ex){
-                    var errorDetails = JsonSerializer.Deserialize<JsonElement>(ex.Message);
-                    if (errorDetails.TryGetProperty("code", out var codeProperty)){
-                        string errorCode = codeProperty.GetString() ?? string.Empty;
-                        if (errorCode == "item_name_in_use"){
-                            /*
-                                TEMPORÁRIO
-
-                                Alguns arquivos não modificam o arquivo atual, mas sim cria um por cima, 
-                                o que acaba chamando o evento de criar e não o de modificar.
-
-                                Uma alternativa é manter os arquivos e pastas dentro de .yaml.
-                            */
-                            await ChangeCallByCreate(client, fileStream, filePath, parentFolderId);
-                            return await BoxUploader.UpdateMetaDataProject();
-                        }else{
-                            throw new Exception($"ManagerFiles : UploadFileAsync(), Erro: Upload not compleate ({ex})");
-                        }
-                    }else{
-                        throw new Exception($"ManagerFiles : UploadFileAsync(), Erro: Upload not compleate ({ex})");
-                    }
+            returnUploadFileToBoxInterface returnUpload = await UploadFileToBox(client, filePath, folderId, parentFolderId);
+            
+            if(returnUpload == null || returnUpload.file == null){
+                if(returnUpload != null && returnUpload.fileName != null){
+                    return await BoxUploader.UpdateMetaDataProject();
                 }
+                return false;
             }
+            
+            Box.Sdk.Gen.Schemas.Files file = returnUpload.file;
+            string fileName = returnUpload.fileName;
+
+
+            bool response;
+            string types = VerifyIfFileNotIsMdOrPrivate(fileName);
+
+            if(types == "isPublic"){
+                var ShareLink = await CreateFileShareLink(client, file?.Entries?[0].Id);
+                response = await BoxUploader.UpdateFileListMetadataProject(client, filePath, fileName, ShareLink, "add");
+            }else if(types == "isMd"){
+                response = await UploadReadmeFileToAzure(filePath, fileName);
+            }else if(types == "isPrivate"){
+                response = true;
+            }else{
+                response = false;
+            }
+
+            if(response)
+                return await BoxUploader.UpdateMetaDataProject();
+            else
+                return false;
         }
 
         public static async Task<bool> ChangeFileAsync(BoxClient client, string filePath, string parentFolderId){
@@ -306,33 +287,79 @@ namespace WindowsApp.Managers.Uploaders.Files{
                 throw new Exception($"ManagerFiles : ChangeCallByCreate(), error: {ex}");
             }
         }
-    
-
-        private static bool VerifyIfFileNotIsMdOrPrivate(string NameFile)
+        
+        private static string VerifyIfFileNotIsMdOrPrivate(string NameFile)
         { 
             if (string.IsNullOrEmpty(NameFile))
             {
-                return true;
+                return "isNull";
             }
 
             // Garante que há um ponto antes de acessar o índice [1]
             string[] nameParts = NameFile.Split(".");
             if (nameParts.Length < 2)
             {
-                return true; // Retorna true caso o nome do arquivo não tenha extensão
+                return "isNull"; // Retorna true caso o nome do arquivo não tenha extensão
             }
 
             if (nameParts[^1] == "md") // Usa o último índice para maior segurança
             {
-                return false;
+                return "isMd";
             }
 
             if (NameFile.StartsWith("_"))
             {
-                return false;
+                return "isPrivate";
             }
 
-            return true;
+            return "isPublic";
+        }
+       
+        private static async Task<returnUploadFileToBoxInterface> UploadFileToBox(BoxClient client, string filePath, string folderId, string parentFolderId){
+            try{
+                using (var fileStream = new FileStream(filePath, FileMode.Open)){
+                    var fileName = Path.GetFileName(filePath);
+
+                    var attributes = new UploadFileRequestBodyAttributesField(
+                        name: fileName, 
+                        parent: new UploadFileRequestBodyAttributesParentField(id: folderId) 
+                    );
+
+                    var requestBody = new UploadFileRequestBody(
+                        attributes: attributes,
+                        file: fileStream 
+                    );
+
+                    return new returnUploadFileToBoxInterface { file = await client.Uploads.UploadFileAsync(requestBody), fileName = fileName };
+                }
+            }
+            catch(Exception error){
+                var errorDetails = JsonSerializer.Deserialize<JsonElement>(error.Message);
+                if (errorDetails.TryGetProperty("code", out var codeProperty)){
+                    string errorCode = codeProperty.GetString() ?? string.Empty;
+                    if (errorCode == "item_name_in_use"){
+                        returnUploadFileToBoxInterface response = await CreateByUploaderFileToBox(client, filePath, parentFolderId);
+                        return new returnUploadFileToBoxInterface { file = null, fileName = response.fileName };
+                    }else{
+                        throw new Exception($"ManagerFiles : UploadFileAsync(), Erro: Upload not compleate ({error})");
+                    }
+                }else{
+                    throw new Exception($"ManagerFiles : UploadFileAsync(), Erro: Upload not compleate ({error})");
+                }
+            }
+        }
+
+        private static async Task<returnUploadFileToBoxInterface> CreateByUploaderFileToBox(BoxClient client, string filePath, string parentFolderId){
+            try{
+                using (var fileStream = new FileStream(filePath, FileMode.Open)){
+                    var fileName = Path.GetFileName(filePath);
+                    await ChangeCallByCreate(client, fileStream, filePath, parentFolderId);
+                    return new returnUploadFileToBoxInterface{ file = null, fileName =  fileName};
+                }
+            }catch(Exception error){
+                throw new Exception($"ManagerFiles : CreateByUploaderFileToBox(), Error {error}");
+            }
+            
         }
     }
 }

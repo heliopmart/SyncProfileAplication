@@ -5,9 +5,6 @@ using Box.Sdk.Gen;
 /*
 
     TODO: 
-    Fazer o Auth do azure
-    Fazer o upload do README.MD para o azure
-    Fazer a politica de arquivos privados (que não são mostrados no site)
     
     Organizar as funções com @Function @type @Description @return @params
 
