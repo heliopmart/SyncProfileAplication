@@ -12,20 +12,33 @@ namespace WindowsAppSync.Services.API{
    public class FirebaseAuthenticator
     {
         private static FirebaseApp? _firebaseApp;
-        public static void AuthenticateWithOAuthAsync()
+         public static void AuthenticateWithOAuthAsync()
         {
-          try
+            try
             {
                 var _config = ConfigHelper.Instance.GetConfig();
-                
-                // Caminho para o arquivo de chave JSON que você baixou do Console Firebase
-                var baseDirectory = AppDomain.CurrentDomain.BaseDirectory; // Diretório atual do aplicativo
-                var pathToServiceAccount = Path.Combine(baseDirectory, "Keys", "serviceAccountKey.json");
+                var firebaseConfig = _config.FirebaseConfig;
 
-                // Inicializar o Firebase Admin SDK com as credenciais da chave de serviço
+                // Criando um objeto de credenciais diretamente com os dados do `.env`
+                var googleCredential = GoogleCredential.FromJson($@"
+                {{
+                    ""type"": ""{firebaseConfig.Type}"",
+                    ""project_id"": ""{firebaseConfig.ProjectId}"",
+                    ""private_key_id"": ""{firebaseConfig.PrivateKeyId}"",
+                    ""private_key"": ""{firebaseConfig.PrivateKey.Replace("\n", "\\n")}"",
+                    ""client_email"": ""{firebaseConfig.ClientEmail}"",
+                    ""client_id"": ""{firebaseConfig.ClientId}"",
+                    ""auth_uri"": ""{firebaseConfig.AuthUri}"",
+                    ""token_uri"": ""{firebaseConfig.TokenUri}"",
+                    ""auth_provider_x509_cert_url"": ""{firebaseConfig.AuthProviderX509CertUrl}"",
+                    ""client_x509_cert_url"": ""{firebaseConfig.ClientX509CertUrl}"",
+                    ""universe_domain"": ""{firebaseConfig.UniverseDomain}""
+                }}");
+
+                // Inicializar o Firebase Admin SDK com as credenciais
                 _firebaseApp = FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile(pathToServiceAccount)
+                    Credential = googleCredential
                 });
 
                 Console.WriteLine("Firebase Admin SDK inicializado com sucesso.");
