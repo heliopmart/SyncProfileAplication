@@ -1,5 +1,5 @@
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using DotNetEnv;
+using System.Text;
 
 namespace WindowsApp.Helpers
 {
@@ -10,13 +10,43 @@ namespace WindowsApp.Helpers
 
         private ConfigHelper()
         {
-            var yaml = File.ReadAllText("appsettings.yaml");
+            // Carregar o .env
+            Env.Load();
 
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(NullNamingConvention.Instance) // CamelCase se usado no YAML
-                .Build();
-
-            _config = deserializer.Deserialize<APPConfig>(yaml);
+            _config = new APPConfig
+            {
+                DefaultPathForProjects = Env.GetString("DEFAULT_PATH_FOR_PROJECTS"),
+                MetaDataPath = Env.GetString("METADATA_PATH"),
+                Development = Env.GetBool("DEVELOPMENT"),
+                SyncInterval = Env.GetInt("SYNC_INTERVAL"),
+                APIConfigs = new APIConfigs
+                {
+                    Token = Env.GetString("TOKEN"),
+                    ClientId = Env.GetString("CLIENT_ID"),
+                    ClientSecret = Env.GetString("CLIENT_SECRET"),
+                    EnterpriseId = Env.GetString("ENTERPRISE_ID"),
+                    JwtPrivateKey = Env.GetString("JWT_PRIVATE_KEY"),
+                    JwtPrivateKeyPassword = Env.GetString("JWT_PRIVATE_KEY_PASSWORD"),
+                    JwtPublicKeyId = Env.GetString("JWT_PUBLIC_KEY_ID"),
+                    UserID = Env.GetString("USER_ID"),
+                    AZURE_STORAGE_CONNECTION_STRING = Env.GetString("AZURE_STORAGE_CONNECTION_STRING")
+                },
+                FirebaseConfig = new FirebaseConfig
+                {
+                    Type = Env.GetString("TYPE"),
+                    ProjectId = Env.GetString("PROJECT_ID"),
+                    PrivateKeyId = Env.GetString("PRIVATE_KEY_ID"),
+                    PrivateKey = Env.GetString("PRIVATE_KEY"),
+                    ClientEmail = Env.GetString("CLIENT_EMAIL"),
+                    ClientId = Env.GetString("CLIENT_ID"),
+                    AuthUri = Env.GetString("AUTH_URI"),
+                    TokenUri = Env.GetString("TOKEN_URI"),
+                    AuthProviderX509CertUrl = Env.GetString("AUTH_PROVIDER_X509_CERT_URL"),
+                    ClientX509CertUrl = Env.GetString("CLIENT_X509_CERT_URL"),
+                    UniverseDomain = Env.GetString("UNIVERSE_DOMAIN")
+                },
+                FirebaseAppID = Env.GetString("FIREBASE_APP_ID")
+            };
         }
 
         public static ConfigHelper Instance => _instance.Value;
@@ -24,47 +54,81 @@ namespace WindowsApp.Helpers
         public APPConfig GetConfig() => _config;
 
         public T GetValue<T>(Func<APPConfig, T> selector) => selector(_config);
-
-        public void SaveConfig()
-        {
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(NullNamingConvention.Instance) // Para manter o estilo de nomes no YAML
-                .Build();
-
-            var yaml = serializer.Serialize(_config);
-
-            // Salva o YAML modificado de volta no arquivo
-            File.WriteAllText("appsettings.yaml", yaml);
-        }
     }
 
-    public class ModifyAppSetting
-    {
-        public static async Task<bool> ChangeAppSettings(ChangeSettings settings)
+        public class ModifyAppSetting
         {
-            var configHelper = ConfigHelper.Instance;
-            var _config = configHelper.GetConfig();
-
-            // Atualiza os valores conforme as configura��es fornecidas
-            if(settings.DefaultPathForProjects != null && settings.DefaultPathForProjects != "")
+            public static async Task<bool> ChangeAppSettings(ChangeSettings settings)
             {
-                _config.DefaultPathForProjects = settings.DefaultPathForProjects;
-            }
-            _config.Development = settings.Development;
-            _config.SyncInterval = settings.SyncInterval;
+                var configHelper = ConfigHelper.Instance;
+                var _config = configHelper.GetConfig();
 
-            // Atualiza o Token de API
-            if(settings.Token != null && settings.Token != "")
+                // Atualiza os valores conforme as configurações fornecidas
+                if (!string.IsNullOrEmpty(settings.DefaultPathForProjects))
+                {
+                    _config.DefaultPathForProjects = settings.DefaultPathForProjects;
+                }
+
+                _config.Development = settings.Development;
+                _config.SyncInterval = settings.SyncInterval;
+
+                if (!string.IsNullOrEmpty(settings.Token))
+                {
+                    _config.APIConfigs.Token = settings.Token;
+                }
+
+                // Salva as alterações no `.env`
+                SaveConfigToEnv(_config);
+
+                return await Task.FromResult(true); // Retorna true para indicar sucesso
+            }
+
+            private static void SaveConfigToEnv(APPConfig config)
             {
-                _config.APIConfigs.Token = settings.Token;
+                StringBuilder envContent = new StringBuilder();
+
+                envContent.AppendLine($"DEFAULT_PATH_FOR_PROJECTS={config.DefaultPathForProjects}");
+                envContent.AppendLine($"METADATA_PATH={config.MetaDataPath}");
+                envContent.AppendLine($"DEVELOPMENT={config.Development.ToString().ToLower()}");
+                envContent.AppendLine($"SYNC_INTERVAL={config.SyncInterval}");
+
+                envContent.AppendLine($"TOKEN={config.APIConfigs.Token}");
+                envContent.AppendLine($"CLIENT_ID={config.APIConfigs.ClientId}");
+                envContent.AppendLine($"CLIENT_SECRET={config.APIConfigs.ClientSecret}");
+                envContent.AppendLine($"ENTERPRISE_ID={config.APIConfigs.EnterpriseId}");
+
+                envContent.AppendLine($"JWT_PRIVATE_KEY=\"{config.APIConfigs.JwtPrivateKey}\"");
+                envContent.AppendLine($"JWT_PRIVATE_KEY_PASSWORD={config.APIConfigs.JwtPrivateKeyPassword}");
+                envContent.AppendLine($"JWT_PUBLIC_KEY_ID={config.APIConfigs.JwtPublicKeyId}");
+                envContent.AppendLine($"USER_ID={config.APIConfigs.UserID}");
+                envContent.AppendLine($"AZURE_STORAGE_CONNECTION_STRING=\"{config.APIConfigs.AZURE_STORAGE_CONNECTION_STRING}\"");
+
+                envContent.AppendLine($"FIREBASE_APP_ID={config.FirebaseAppID}");
+
+                envContent.AppendLine($"TYPE={config.FirebaseConfig.Type}");
+                envContent.AppendLine($"PROJECT_ID={config.FirebaseConfig.ProjectId}");
+                envContent.AppendLine($"PRIVATE_KEY_ID={config.FirebaseConfig.PrivateKeyId}");
+                envContent.AppendLine($"PRIVATE_KEY=\"{config.FirebaseConfig.PrivateKey}\"");
+                envContent.AppendLine($"CLIENT_EMAIL={config.FirebaseConfig.ClientEmail}");
+                envContent.AppendLine($"CLIENT_ID={config.FirebaseConfig.ClientId}");
+                envContent.AppendLine($"AUTH_URI={config.FirebaseConfig.AuthUri}");
+                envContent.AppendLine($"TOKEN_URI={config.FirebaseConfig.TokenUri}");
+                envContent.AppendLine($"AUTH_PROVIDER_X509_CERT_URL={config.FirebaseConfig.AuthProviderX509CertUrl}");
+                envContent.AppendLine($"CLIENT_X509_CERT_URL={config.FirebaseConfig.ClientX509CertUrl}");
+                envContent.AppendLine($"UNIVERSE_DOMAIN={config.FirebaseConfig.UniverseDomain}");
+
+                // Sobrescreve o arquivo `.env` com as novas configurações
+                File.WriteAllText(".env", envContent.ToString());
             }
-
-            // Salva as mudan�as no arquivo YAML
-            configHelper.SaveConfig();
-
-            return await Task.FromResult(true); // Retorna true para indicar sucesso
         }
-    }
+
+        public class ChangeSettings
+        {
+            public required string Token { get; set; }
+            public required string DefaultPathForProjects { get; set; }
+            public required bool Development { get; set; }
+            public int SyncInterval { get; set; }
+        }
 
     public class APPConfig
     {
@@ -73,27 +137,34 @@ namespace WindowsApp.Helpers
         public required bool Development { get; set; }
         public int SyncInterval { get; set; }
         public required APIConfigs APIConfigs { get; set; }
-        public required string FirebaseAppID {get; set;}
-    }
-    
-    public class APIConfigs
-    {
-        public required string Token {get; set;}
-        public required string ClientId {get; set;}
-        public required string ClientSecret {get; set;}
-        public required string EnterpriseId {get; set;}
-        public required string JwtPrivateKey { get; set; }
-        public required string JwtPrivateKeyPassword {get; set;}
-        public required string JwtPublicKeyId {get; set;}
-        public required string UserID {get; set; }
-        public required string AZURE_STORAGE_CONNECTION_STRING {get;set;}
+        public required FirebaseConfig FirebaseConfig { get; set; }
+        public required string FirebaseAppID { get; set; }
     }
 
-    public class ChangeSettings 
-    { 
+    public class FirebaseConfig
+    {
+        public required string Type { get; set; }
+        public required string ProjectId { get; set; }
+        public required string PrivateKeyId { get; set; }
+        public required string PrivateKey { get; set; }
+        public required string ClientEmail { get; set; }
+        public required string ClientId { get; set; }
+        public required string AuthUri { get; set; }
+        public required string TokenUri { get; set; }
+        public required string AuthProviderX509CertUrl { get; set; }
+        public required string ClientX509CertUrl { get; set; }
+        public required string UniverseDomain { get; set; }
+    }
+    public class APIConfigs
+    {
         public required string Token { get; set; }
-        public required string DefaultPathForProjects { get; set; }
-        public required bool Development { get; set; }
-        public int SyncInterval { get; set; }
+        public required string ClientId { get; set; }
+        public required string ClientSecret { get; set; }
+        public required string EnterpriseId { get; set; }
+        public required string JwtPrivateKey { get; set; }
+        public required string JwtPrivateKeyPassword { get; set; }
+        public required string JwtPublicKeyId { get; set; }
+        public required string UserID { get; set; }
+        public required string AZURE_STORAGE_CONNECTION_STRING { get; set; }
     }
 }

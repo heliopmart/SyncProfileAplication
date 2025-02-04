@@ -39,13 +39,21 @@ namespace WindowsApp.Views
 
         public SetApp()
         {
-            _ = InitializeComponentsAsync();
+            InitializeComponentsAsync();
            SetTrayIcon(); // Função para configurar o ícone da bandeja
            // MinimizeToTray(); // Função para minimizar para a bandeja
         }
 
-        private async Task InitializeComponentsAsync()
+        private void InitializeComponentsAsync()
         {
+            SetFormProperties();
+            SetUpControls();
+        }
+
+        private async Task InicializeAuth(){
+            if(_projectManager != null || _projectsForm != null){
+                return;
+            }
 
             var authenticationCompletionSource = new TaskCompletionSource();
             _auth = await Authenticator.Auth();
@@ -55,9 +63,6 @@ namespace WindowsApp.Views
             _projectManager = new ProjectManager(_auth);
             _projectsForm = new ProjectsApp(_auth, _projectManager);
             FirebaseAuthenticator.AuthenticateWithOAuthAsync();
-
-            SetFormProperties();
-            SetUpControls();
         }
 
         private void SetFormProperties()
@@ -147,6 +152,7 @@ namespace WindowsApp.Views
         // Evento de Projetos
         private void BtnProjects_Click(object? sender, EventArgs e)
         {
+            _ = InicializeAuth();
             SyncMetaDataProject();
             _projectsForm?.ShowDialog();
         }
@@ -161,12 +167,14 @@ namespace WindowsApp.Views
         // Evento para Iniciar a Sincronização
         private void BtnStartSync_Click(object? sender, EventArgs e)
         {
+            _ = InicializeAuth();
             HandleSyncAction(true);
         }
 
         // Evento para Parar a Sincronização
         private void BtnStopSync_Click(object? sender, EventArgs e)
         {
+            _ = InicializeAuth();
             HandleSyncAction(false);
         }
 
@@ -258,13 +266,13 @@ namespace WindowsApp.Views
         // Substitua o método `OnFormClosing` para garantir que o app minimize ao invés de fechar
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // base.OnFormClosing(e);
-            // if (e.CloseReason == CloseReason.UserClosing)
-            // {
-            //     e.Cancel = true;
-            //     MinimizeToTray();
-            //     SetTrayIcon();
-            // }
+            base.OnFormClosing(e);
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                MinimizeToTray();
+                SetTrayIcon();
+            }
         }
     }
 }

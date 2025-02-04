@@ -6,4 +6,5 @@ appsettings*
 appsettings.yaml
 ./appsettings.yaml
 Keys/
+.env
 ProfileWeb/

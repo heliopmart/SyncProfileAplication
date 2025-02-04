@@ -16,6 +16,8 @@ namespace WindowsAppSync.Services.API{
         {
           try
             {
+                var _config = ConfigHelper.Instance.GetConfig();
+                
                 // Caminho para o arquivo de chave JSON que você baixou do Console Firebase
                 var baseDirectory = AppDomain.CurrentDomain.BaseDirectory; // Diretório atual do aplicativo
                 var pathToServiceAccount = Path.Combine(baseDirectory, "Keys", "serviceAccountKey.json");

@@ -3,7 +3,7 @@ LocalProjects:
     Name: Teste 1
     DateTime: 2025-01-09T19:26:33.0000000
     Device: DESKTOP-7P120MF
-    AsyncTime: 2025-02-04T14:42:04.7190401-03:00
+    AsyncTime: 2025-02-04T16:09:45.1224672-03:00
     FolderId: 302035218842
     Status: 1
     Id: 51QrtadAg35gbQI10NUy
@@ -16,12 +16,15 @@ LocalProjects:
     Name: teste 2
     DateTime: 2025-02-04T12:06:28.6113297-03:00
     Device: DESKTOP-7P120MF
-    AsyncTime: 2025-02-04T14:42:25.2600600-03:00
+    AsyncTime: 2025-02-04T16:09:45.7496433-03:00
     FolderId: 305950083622
     Status: 1
     Id: 7586cb8b-99c5-45b3-b174-2ec29a818377
     metaDataProject:
       description: ''
-      public_files: []
+      public_files:
+      - extention: txt
+        name: A.txt
+        share: https://app.box.com/s/yq6mdubt8zs66xoaflyo5ow2yjh7wdl9
       url_image: ''
     url_readme: teste 2.md
