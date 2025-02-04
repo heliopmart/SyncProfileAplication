@@ -1,0 +1,27 @@
+LocalProjects:
+  Teste 1:
+    Name: Teste 1
+    DateTime: 2025-01-09T19:26:33.0000000
+    Device: DESKTOP-7P120MF
+    AsyncTime: 2025-02-04T12:41:45.7725828-03:00
+    FolderId: 302035218842
+    Status: 1
+    Id: 51QrtadAg35gbQI10NUy
+    metaDataProject:
+      description: ''
+      public_files: []
+      url_image: ''
+    url_readme: Teste_1
+  teste 2:
+    Name: teste 2
+    DateTime: 2025-02-04T12:06:28.6113297-03:00
+    Device: DESKTOP-7P120MF
+    AsyncTime: 2025-02-04T12:41:46.4718344-03:00
+    FolderId: 305950083622
+    Status: 1
+    Id: 7586cb8b-99c5-45b3-b174-2ec29a818377
+    metaDataProject:
+      description: ''
+      public_files: []
+      url_image: ''
+    url_readme: teste 2.md

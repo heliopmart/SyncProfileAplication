@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+*.lock.json
+appsettings*
+appsettings.yaml
+./appsettings.yaml
+Keys/
+ProfileWeb/
