@@ -33,17 +33,17 @@ namespace WindowsApp.Helpers
                 },
                 FirebaseConfig = new FirebaseConfig
                 {
-                    Type = Env.GetString("TYPE"),
-                    ProjectId = Env.GetString("PROJECT_ID"),
-                    PrivateKeyId = Env.GetString("PRIVATE_KEY_ID"),
-                    PrivateKey = Env.GetString("PRIVATE_KEY"),
-                    ClientEmail = Env.GetString("CLIENT_EMAIL"),
-                    ClientId = Env.GetString("CLIENT_ID"),
-                    AuthUri = Env.GetString("AUTH_URI"),
-                    TokenUri = Env.GetString("TOKEN_URI"),
-                    AuthProviderX509CertUrl = Env.GetString("AUTH_PROVIDER_X509_CERT_URL"),
-                    ClientX509CertUrl = Env.GetString("CLIENT_X509_CERT_URL"),
-                    UniverseDomain = Env.GetString("UNIVERSE_DOMAIN")
+                    Type = Env.GetString("FIREBASE_TYPE"),
+                    ProjectId = Env.GetString("FIREBASE_PROJECT_ID"),
+                    PrivateKeyId = Env.GetString("FIREBASE_PRIVATE_KEY_ID"),
+                    PrivateKey = Env.GetString("FIREBASE_PRIVATE_KEY"),
+                    ClientEmail = Env.GetString("FIREBASE_CLIENT_EMAIL"),
+                    ClientId = Env.GetString("FIREBASE_CLIENT_ID"),
+                    AuthUri = Env.GetString("FIREBASE_AUTH_URI"),
+                    TokenUri = Env.GetString("FIREBASE_TOKEN_URI"),
+                    AuthProviderX509CertUrl = Env.GetString("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+                    ClientX509CertUrl = Env.GetString("FIREBASE_CLIENT_X509_CERT_URL"),
+                    UniverseDomain = Env.GetString("FIREBASE_UNIVERSE_DOMAIN")
                 },
                 FirebaseAppID = Env.GetString("FIREBASE_APP_ID")
             };
@@ -105,17 +105,17 @@ namespace WindowsApp.Helpers
 
                 envContent.AppendLine($"FIREBASE_APP_ID={config.FirebaseAppID}");
 
-                envContent.AppendLine($"TYPE={config.FirebaseConfig.Type}");
-                envContent.AppendLine($"PROJECT_ID={config.FirebaseConfig.ProjectId}");
-                envContent.AppendLine($"PRIVATE_KEY_ID={config.FirebaseConfig.PrivateKeyId}");
-                envContent.AppendLine($"PRIVATE_KEY=\"{config.FirebaseConfig.PrivateKey}\"");
-                envContent.AppendLine($"CLIENT_EMAIL={config.FirebaseConfig.ClientEmail}");
-                envContent.AppendLine($"CLIENT_ID={config.FirebaseConfig.ClientId}");
-                envContent.AppendLine($"AUTH_URI={config.FirebaseConfig.AuthUri}");
-                envContent.AppendLine($"TOKEN_URI={config.FirebaseConfig.TokenUri}");
-                envContent.AppendLine($"AUTH_PROVIDER_X509_CERT_URL={config.FirebaseConfig.AuthProviderX509CertUrl}");
-                envContent.AppendLine($"CLIENT_X509_CERT_URL={config.FirebaseConfig.ClientX509CertUrl}");
-                envContent.AppendLine($"UNIVERSE_DOMAIN={config.FirebaseConfig.UniverseDomain}");
+                envContent.AppendLine($"FIREBASE_TYPE={config.FirebaseConfig.Type}");
+                envContent.AppendLine($"FIREBASE_PROJECT_ID={config.FirebaseConfig.ProjectId}");
+                envContent.AppendLine($"FIREBASE_PRIVATE_KEY_ID={config.FirebaseConfig.PrivateKeyId}");
+                envContent.AppendLine($"FIREBASE_PRIVATE_KEY=\"{config.FirebaseConfig.PrivateKey}\"");
+                envContent.AppendLine($"FIREBASE_CLIENT_EMAIL={config.FirebaseConfig.ClientEmail}");
+                envContent.AppendLine($"FIREBASE_CLIENT_ID={config.FirebaseConfig.ClientId}");
+                envContent.AppendLine($"FIREBASE_AUTH_URI={config.FirebaseConfig.AuthUri}");
+                envContent.AppendLine($"FIREBASE_TOKEN_URI={config.FirebaseConfig.TokenUri}");
+                envContent.AppendLine($"FIREBASE_AUTH_PROVIDER_X509_CERT_URL={config.FirebaseConfig.AuthProviderX509CertUrl}");
+                envContent.AppendLine($"FIREBASE_CLIENT_X509_CERT_URL={config.FirebaseConfig.ClientX509CertUrl}");
+                envContent.AppendLine($"FIREBASE_UNIVERSE_DOMAIN={config.FirebaseConfig.UniverseDomain}");
 
                 // Sobrescreve o arquivo `.env` com as novas configurações
                 File.WriteAllText(".env", envContent.ToString());

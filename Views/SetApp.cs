@@ -40,8 +40,8 @@ namespace WindowsApp.Views
         public SetApp()
         {
             InitializeComponentsAsync();
-           SetTrayIcon(); // Função para configurar o ícone da bandeja
-           // MinimizeToTray(); // Função para minimizar para a bandeja
+            SetTrayIcon(); // Função para configurar o ícone da bandeja
+            MinimizeToTray(); // Função para minimizar para a bandeja
         }
 
         private void InitializeComponentsAsync()
@@ -232,9 +232,16 @@ namespace WindowsApp.Views
             trayMenu.Items.Add("Abrir", null, TrayOpen_Click);
             trayMenu.Items.Add("Sair", null, TrayExit_Click);
 
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string iconPath = Path.Combine(baseDirectory, "Resources", "icone.ico");
+
+            if (!File.Exists(iconPath)){
+                return;
+            }
+
             trayIcon = new NotifyIcon
             {
-                Icon = new Icon("./Resources/icone.ico"), // Ícone da bandeja
+                Icon = new Icon(iconPath), // Ícone da bandeja
                 ContextMenuStrip = trayMenu,
                 Visible = true
             };
